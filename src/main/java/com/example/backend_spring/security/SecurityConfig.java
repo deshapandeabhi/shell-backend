@@ -34,6 +34,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.POST, "/api/v1/careers/apply").permitAll()
                 .requestMatchers("/h2-console/**").permitAll() // Allow H2 DB console for debug
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll() // Swagger
                 .requestMatchers(HttpMethod.GET, "/api/v1/careers/applications").authenticated()
                 .anyRequest().authenticated()
             )
