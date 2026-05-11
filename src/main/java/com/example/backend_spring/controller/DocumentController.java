@@ -34,6 +34,9 @@ public class DocumentController {
      * 3. Correct MIME types
      * 4. Content-Disposition: inline (opens in new tab)
      */
+    /**
+     * Securely serves a document file.
+     */
     @GetMapping("/{category}/{filename}")
     public ResponseEntity<Resource> getDocument(
             @PathVariable String category,
@@ -41,19 +44,13 @@ public class DocumentController {
         
         try {
             // 1. Path Traversal Protection: Sanitize input
-            // We only allow alphanumeric, dots, and hyphens. No ".." allowed.
             if (!isValidPath(category) || !isValidPath(filename)) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
 
-            Path filePath = Paths.get(documentBaseDir).resolve(category).resolve(filename).normalize();
-            
-            // Double check that the resulting path is still within the base directory
-            if (!filePath.startsWith(Paths.get(documentBaseDir).toAbsolutePath())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
-
-            Resource resource = new UrlResource(filePath.toUri());
+            // 2. Load from Classpath (Works in JAR/Railway)
+            String resourcePath = "documents/" + category + "/" + filename;
+            Resource resource = new org.springframework.core.io.ClassPathResource(resourcePath);
 
             if (resource.exists() && resource.isReadable()) {
                 String contentType = determineContentType(filename);
@@ -66,7 +63,7 @@ public class DocumentController {
             } else {
                 return ResponseEntity.notFound().build();
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
